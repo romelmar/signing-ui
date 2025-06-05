@@ -1,0 +1,33 @@
+{
+  "name": "signing-ui",
+  "version": "1.0.0",
+  "description": "Vue 3 signing UI plugin for use in Sneat or other Vue apps.",
+"main": "dist/signing-ui.umd.js",
+"module": "dist/signing-ui.es.js",
+"types": "dist/index.d.ts",
+
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite watch"
+  },
+  "keywords": [
+    "vue3",
+    "signature",
+    "signing",
+    "plugin",
+    "vue-component"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^5.4.19"
+  }
+}
