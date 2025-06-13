@@ -1,10 +1,11 @@
 // src/index.js
-import SigningPad from './components/SigningPad.vue';
+
+import * as components from './components'
 
 export default {
   install(app) {
-    app.component('SigningPad', SigningPad);
+    for (const componentKey in components) {
+      app.component(componentKey, components[componentKey])
+    }
   }
-};
-
-export { SigningPad };
+}

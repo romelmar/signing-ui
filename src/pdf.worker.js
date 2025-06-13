@@ -1,0 +1,1 @@
+import * as pdfjs from 'pdfjs-dist/build/pdf.worker.mjs'

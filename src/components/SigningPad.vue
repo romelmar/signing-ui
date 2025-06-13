@@ -1,62 +1,85 @@
-<!-- src/components/SigningPad.vue -->
 <template>
-  <div>
-    <canvas ref="canvas" class="border rounded" :width="width" :height="height" />
-    <div class="mt-2">
-      <button @click="clear" class="btn btn-warning">Clear</button>
+  <div style="text-align: center">
+    <canvas ref="canvasRef"></canvas>
+
+    <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
+      <button @click="prevPage" :disabled="page <= 1">Previous</button>
+      <span>Page {{ page }} of {{ numPages }}</span>
+      <button @click="nextPage" :disabled="page >= numPages">Next</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue'
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
+import * as pdfjsLib from 'pdfjs-dist/build/pdf'
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url'
+
+// ✅ Set the worker source (required for Vite + Vue)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 const props = defineProps({
-  width: { type: Number, default: 400 },
-  height: { type: Number, default: 200 }
-});
+  url: {
+    type: String,
+    required: true
+  }
+})
 
-const canvas = ref(null);
-let ctx;
-let drawing = false;
+const canvasRef = ref(null)
+const pdfDoc = ref(null)
+const page = ref(1)
+const numPages = ref(0)
 
-onMounted(() => {
-  ctx = canvas.value.getContext('2d');
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
+const renderPage = async () => {
+  if (!pdfDoc.value) return
 
-  canvas.value.addEventListener('mousedown', startDrawing);
-  canvas.value.addEventListener('mouseup', stopDrawing);
-  canvas.value.addEventListener('mousemove', draw);
-  canvas.value.addEventListener('mouseout', stopDrawing);
-});
+  const currentPage = await pdfDoc.value.getPage(page.value)
+  const viewport = currentPage.getViewport({ scale: 1.5 })
 
-function startDrawing(e) {
-  drawing = true;
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX, e.offsetY);
+  const canvas = canvasRef.value
+  const context = canvas.getContext('2d')
+  canvas.width = viewport.width
+  canvas.height = viewport.height
+
+  await currentPage.render({
+    canvasContext: context,
+    viewport
+  }).promise
 }
 
-function draw(e) {
-  if (!drawing) return;
-  ctx.lineTo(e.offsetX, e.offsetY);
-  ctx.stroke();
+const loadPdf = async () => {
+  try {
+    const loadingTask = getDocument(props.url)
+    pdfDoc.value = await loadingTask.promise
+    numPages.value = pdfDoc.value.numPages
+    await renderPage()
+  } catch (e) {
+    console.error('Error loading PDF:', e)
+  }
 }
 
-function stopDrawing() {
-  drawing = false;
-  ctx.closePath();
+const prevPage = () => {
+  if (page.value > 1) {
+    page.value--
+  }
 }
 
-function clear() {
-  ctx.clearRect(0, 0, props.width, props.height);
+const nextPage = () => {
+  if (page.value < numPages.value) {
+    page.value++
+  }
 }
+
+watch(() => props.url, loadPdf)
+watch(page, renderPage)
+
+onMounted(loadPdf)
 </script>
 
 <style scoped>
 canvas {
-  background: #fff;
-  touch-action: none;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
 }
 </style>
